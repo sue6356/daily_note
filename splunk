@@ -1,0 +1,45 @@
+#----->>------
+#Delete the app and its directory
+$/bin# ./splunk remove app
+
+#检查更新:
+app.conf
+[package] 
+check_for_updates = 0 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
