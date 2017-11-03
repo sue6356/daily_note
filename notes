@@ -1,0 +1,62 @@
+#----需求脚本整理----
+#删除/home/web/mysql  /home/web/oracle 这两个目录中2天前的*.log 和*.txt文件
+#清空/home/web/mysql  /home/web/oracle 这两个目录中*.out的文件 
+
+#bin/bash
+for DIR in {/home/web/mysql,/home/web/oracle}
+do
+find $DIR -mtime +2 -name "*.log" -exec rm -rf {} \;&>/dev/null
+find $DIR -mtime +2 -name "*.txt" -exec rm -rf {} \;&>/dev/null
+done
+
+find $DIR -name "*.out" -exec sed -i '1,$s//' {} \;
+dir1="$(find /home/web/msysql -name "*.out")"
+dir2=`find /home/web/oracle -name "*.out"`
+for FILE in "$dir1 $dir2"
+do 
+echo  > $FILE
+done
+
+
+
+#----资料积累----
+# 总核数 = 物理CPU个数 X 每颗物理CPU的核数 
+# 总逻辑CPU数 = 物理CPU个数 X 每颗物理CPU的核数 X 超线程数
+# 查看物理CPU个数
+cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l
+# 查看每个物理CPU中core的个数(即核数)
+cat /proc/cpuinfo| grep "cpu cores"| uniq
+# 查看逻辑CPU的个数
+cat /proc/cpuinfo| grep "processor"| wc -l
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
