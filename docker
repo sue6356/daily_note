@@ -154,7 +154,11 @@ CMD ["nginx"]
 5  #docker images
 ----/Dockerfile构建镜像----
 
-
+#------重启docker服务器后 遇到 'device or resource busy'错误 
+这是一个docker的 bug
+解决方式是先找出没有umount的路径 
+cat /proc/mounts | grep "mapper/docker" | awk '{print $2}' 
+然后依次unmount 
 
 
 
