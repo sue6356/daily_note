@@ -69,6 +69,15 @@ model name    : Intel(R) Core(TM) i5-2320 CPU @ 3.00GHz
 #删除原先的java命令环境变量指向地址
 rm -r $(which(java))
 
+#跟踪dig的查询路径 
+Dig是domain information groper的缩写
+你可能是个traceroute的狂热爱好者，经常喜欢查看如何从点A连接点B。那你可以使用dig +trace选项做类似的事。
+dig gentoo.de +trace
+你可以在dig输出的头部分看到根DNS，然后找到负责解析所有*.de的DNS，最后找到gentoo.de的域名IP
+
+#vim技巧
+grep -v "^$""     #过滤空白符            
+grep -v "^#"      #不显示以#号开头的行     
 
 
 
