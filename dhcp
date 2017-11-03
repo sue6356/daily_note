@@ -1,0 +1,15 @@
+#yum -y install dhcp-4.1.1-31.P1.el6i686.rpm
+ipv4 udp 67/68   ipv6 udp 546/547
+服务名：DHCPD
+主配置文件：/etc/dhcp/dhcpd.conf
+模板文件：/usr/share/doc/dhcp-4.1.1/dhcpd.conf.sample
+复制到/etc/dhcpd/ 下
+option domain-name 设置所在DNS域
+option domain-name server 设置DNS服务器地址
+default-lease-time 设置默认租约时间
+max-lease-time  设置最大租约时间，单位为秒
+log-facility 指定日志设备
+ddns-update-style 设定DNS的更新方式
+authority 标示权威服务器
+log-facility local7 日志发送到local7日志服务器中
+
