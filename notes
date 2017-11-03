@@ -75,20 +75,66 @@ Dig是domain information groper的缩写
 dig gentoo.de +trace
 你可以在dig输出的头部分看到根DNS，然后找到负责解析所有*.de的DNS，最后找到gentoo.de的域名IP
 
-#vim技巧
+
+#-----vim技巧-----
 grep -v "^$""     #过滤空白符            
 grep -v "^#"      #不显示以#号开头的行     
+#在全部内容的行首添加 # 号注释
+:% s/^/#/g 
+#在1~10 行首添加 # 号注释
+:1,10 s/^/#/g 
+#删除所有内容
+:.,$d
 
 
 
+查看所属root用户进程所打开的文件类型为txt的文件
+# lsof -a -u root -d txt
+查看8000端口运行情况
+# lsof -i :8000
 
+查看当前是否有进程打开/var/logmessages文件
+# lsof |grep /var/log/messages
+syslogd   1283      root    2w      REG        3,3  5381017    1773647 /var/log/messages (deleted)
+如果可以通过文件描述符查看相应的数据，那么就可以使用 I/O 重定向将其复制到文件中，如: 
+cat /proc/1283/fd/2 > /var/log/messages 
+对于许多应用程序，尤其是日志文件和数据库，这种恢复删除文件的方法非常有用
 
+#如何永久修改系统时间
+date       //本年本地时间
+hwclock -r //查看硬件时间
+hwclock --set --date '2015-8-31 13:24:00' //此处填上你想修改的硬件时间。
+hwclock --hctosys //设置硬件时间与系统时间同步。
+hwclock -w //保存时间
+init 6     //快速重启
 
+#-----常用yum命令-----
+# yum clean all (清除缓存)
+# yum makecache (建立新缓存)
 
+#查看当前TCP连接的状态和对应的连接数量，一般只关心TIME_WAIT的个数。端口的数量只有65535个，占用一个少一个，会严重的影响到后继的新连接。这种情况下，我们就有必要调整下Linux的TCP内核参数，让系统更快的释放TIME_WAIT连接。
+[root@system1 ~]# sysctl -p
+[root@system1 ~]# netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}'         
+ESTABLISHED 43  
 
+#vim /etc/sysctl.conf
+net.ipv4.tcp_tw_reuse = 1
+#表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；
+net.ipv4.tcp_tw_recycle = 1
+#表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭；
+net.ipv4.tcp_fin_timeout
+#修改系統默认的 TIMEOUT 时间。
 
-
-
+#-----find实用命令-----
+#删除一个月之前的所有文件
+# find . -mtime +29 -exec rm -rf {} \;
+#统计排序大小一周之前大于100M的文件
+# find . -size +100M -a -mtime 7  -exec ls -lhS {} \;
+#查询当前目录下前一天所有文件总大小：
+# find . -mtime -1 -type f -ls |awk '{sum+=$1}END{print sum}'
+1457223926
+#目录下30分钟内的文件，并逐行为这个文件添加行头 1234
+# find . -type f -amin -30 -exec sed -i 's/^/1234/' {} \;
 
 
 
