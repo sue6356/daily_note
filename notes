@@ -1,17 +1,17 @@
 #----需求脚本整理----
-#删除/home/web/mysql  /home/web/oracle 这两个目录中2天前的*.log 和*.txt文件
-#清空/home/web/mysql  /home/web/oracle 这两个目录中*.out的文件 
+#删除/a/b/c  /d/e/f 这两个目录中2天前的*.log 和*.txt文件
+#清空/a/b/c  /d/e/f 这两个目录中*.out的文件 
 
 #bin/bash
-for DIR in {/home/web/mysql,/home/web/oracle}
+for DIR in {/a/b/c,/d/e/f }
 do
 find $DIR -mtime +2 -name "*.log" -exec rm -rf {} \;&>/dev/null
 find $DIR -mtime +2 -name "*.txt" -exec rm -rf {} \;&>/dev/null
 done
 
 find $DIR -name "*.out" -exec sed -i '1,$s//' {} \;
-dir1="$(find /home/web/msysql -name "*.out")"
-dir2=`find /home/web/oracle -name "*.out"`
+dir1="$(find /a/b/c -name "*.out")"
+dir2=`find /a/b/c -name "*.out"`
 for FILE in "$dir1 $dir2"
 do 
 echo  > $FILE
@@ -136,10 +136,64 @@ net.ipv4.tcp_fin_timeout
 #目录下30分钟内的文件，并逐行为这个文件添加行头 1234
 # find . -type f -amin -30 -exec sed -i 's/^/1234/' {} \;
 
+#-----selinux常用查看命令-----
+#semanage login -l                            //查看当前SELinux用户的状态
+#semanage login -a -s unconfined_u username   //限制了添加-a普通用户userame,并为这种约束定义-s user_u上下文
+id -Z                                         //unconfined 不受任何selinux设置限制
+#vim /sys/fs/selinux/booleans/selinuxuser_ping //里面的参数通常是1，它允许用户执行ping和traceroute 
+#getsebool user_exec_content                   //on它说明允许用户执行自己主目录中或/tmp目录中的脚本
+#setsebool user_exec_content off
+#getsebool -a                                  //显示全部可用的布尔型参数列表
+#semanage boolean -l                           //显示每个布尔型参数的更多信息，配合grep使用
+#vim /etc/selinux/targeted/comtexts/files/file_contexts  //配置默认的上下文
+#ps -eZ                                       //列出每个-e进程的selinux上下文
+#ausearch -m avc -c sudo                      //审计搜索命令，过滤某些特定类型的问题 访问向量缓存(access vecrot cache)消息,-c允许我们定义通常在日志中使用的名字，如httpd,su
+#sealert -a /var/log/audit/audit.log          //提供列表分析
+selinux上下文定义了使用正则表达式  (/.*)?  这个正则被广泛用于匹配一个目录及其包含的所有文件   例： /var/ftp(/.*)? 
 
+# arping 192.168.1.1    //测试IP是否有冲突
 
+#sestatus                              //确认SELinux处于激活状态
+#sealert -a /var/log/audit/audit.log 
+#sestatus | grep -i mod                
 
-
+#-----SELinux相关指令工具-----
+#reference from:     http://www.cnblogs.com/zgx/archive/2011/08/31/2160330.html
+#--restorecon
+说明：恢复档案目录的预设的security Context
+规格来源：/etc/selinux/<POLICY>/contexts/files/目录内的file_contexts与file_contexts.local
+常用参数如下：
+-r | -R：包含子目录与其下档案目录
+-F：恢復使用预设的項目（就算是檔案符合存取规范）
+-v：显示执行过程
+使用方式：restorecon [FRrv] [-e excludedir ] pathname... ]
+使用范例如下：
+restorecon /etc/ntp.conf
+restorecon -v /etc/ntp.conf
+restorecon -v -F /etc/ntp.conf
+手动配置新增恢复规则
+1）档案名称
+/etc/selinux/<POLICYTYPE>/contexts/files/file_contexts.local
+2）新增配置范例
+/var/ftp(/.*)?   system_u:object_r:public_content_t
+3）注意
+可以使用semanage程式来维护会比较方便
+#--fixfiles
+说明：修正档案目录的预设的security Context，依据/etc/selinux/<POLICY>/contexts/files/内相关档案修正
+使用方式：
+fixfiles { check | restore|[-F] relabel } [[dir] ... ]
+fixfiles -R rpmpackage[,rpmpackage...] { check | restore }
+参数：
+-R：使用指定的rpm 套件所提供的檔案清單
+使用范例：
+fixfiles check /etc
+fixfiles restore /etc
+fixfiles -F relabel /
+fixfiles -R setup check
+#--audit2why
+说明：检视SELinux audit讯息内容，提供检视/var/log/audit/audit.log内的记录资讯说明
+使用范例：audit2why <  /var/log/audit/audit.log
+注意：需要搭配启动auditd服务程式一起使用
 
 
 
