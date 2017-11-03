@@ -1,0 +1,8 @@
+#-----获取主机名，IP地址------
+import socket
+myname = socket.getfqdn(socket.gethostname(  ))
+myaddr = socket.gethostbyname(myname)
+print myname
+print myaddr
+
+
