@@ -102,7 +102,12 @@ includefile /etc/ntp/crypto/pw
 keys /etc/ntp/keys
 --------------------/搭建NTP server-----------------------
 
+连网更新时间，如果成功，将系统时间，写入BOIS  
+# ntpdate 210.72.145.44 && hwclock -w                    //中国国家受时中心 210.72.145.44
+#hwclock -w 或 hwclock --systohc 可以做到crontab里
 
+时区的信息存在/usr/share/zoneinfo/下面，本机的时区信息存在/etc/localtime
+# cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
 
 
 
