@@ -6,3 +6,53 @@ print myname
 print myaddr
 
 
+#-----win端获取主机名，IP地址------
+# -*-coding:gbk-*-
+import os
+import re
+os.system("attrib -r -s -h c:\Windows\System32\drivers\etc\hosts")
+os.system("copy c:\Windows\System32\drivers\etc\hosts c:\Windows\System32\drivers\etc\hosts.bak")
+readfile=open("c:/Windows/System32/drivers/etc/hosts",'r')
+# readfile.read()
+# for i in readfile:
+#     print i
+#
+writefile=open("c:/Windows/System32/drivers/etc/hosts1",'w')
+for i1 in readfile:
+    # print type(i1)
+    if not re.match(r'[\#\w\s\.]+e|Er|Rp|P\.n|Ni|Iw|Wo|Od|Da|Ai|I\.n|Ne|Et|T\[\#\w\s\.]+',i1):
+        print i1
+        writefile.write(i1)
+
+
+writefile.close()
+os.system("copy c:\Windows\System32\drivers\etc\hosts1 c:\Windows\System32\drivers\etc\hosts /y")
+os.system("notepad c:\Windows\System32\drivers\etc\hosts1 c:\Windows\System32\drivers\etc\hosts")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
