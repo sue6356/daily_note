@@ -1,0 +1,85 @@
+
+#----syslog相关----
+syslog-ng (syslog-Next generation) 是syslog的升级版,syslog-ng有两个版本,一个是收费的,一个是开源的，那么作为syslog的下一代产品,功能是可想而知,肯定比syslog的功能强大的多,如
+高性能
+可靠的传输
+支持多平台
+高可靠性
+众多的用户群体
+强大的日志过滤及排序
+事件标签和关联性
+支持最新的IETF标准
+等....
+
+syslog-ng 
+nest generation 
+
+syslog   服务：
+syslogd  系统，非内核产生的信息
+klogd    内核产生的信息
+kernel --> 物理终端（/dev/console） /var/log/dmesg
+#dmesg
+#cat /var/log/dmesg
+
+日志需要滚动(日志切割):
+logrotate
+/etc/cron.daily/logrotate
+/etc/logrotate.conf
+/etc/logrotate.d/syslog   //滚动定义
+/var/log/messages         //系统标准错误日志信息；非内核产生的引导信息，各子系统产生的信息
+/var/log/secure   
+
+#vi /etc/rc.d/init.d/rsyslog     
+
+logrotate中包含了一个定时任务，根据/etc/logrotate.conf文件和/etc/logrotate.d/目录中的的配置定期的转储日志文件。
+
+#安装syslog-ng 注意点：
+#安装依赖包：
+#yum -y install kernel-headers* glibc-headers-* glibc-devel-* gcc-* zlib-* zlib-devel-* libffi-* libffi-devel-* e2fsprogs-devel-* keyutils-libs-devel-* libselinux-
+devel-* libsepol-devel-* libselinux-devel-* krb5-devel-* openssl-devel-* pcre-devel xz
+#export PKG_CONFIG_PATH=/usr/local/eventlog/lib/pkgconfig
+#./configure --prefix=/usr/local/syslog-ng --with-libol=/usr/local/libol && make && make install
+#mkdir /usr/local/syslog-ng/etc
+#mkdir /usr/local/syslog-ng/var
+#cp /usr/local/software/syslog-ng-3.5.5/contrib/syslog-ng.conf.RedHat /usr/local/syslog-ng/etc
+#cp /usr/local/software/syslog-ng-3.5.5/scl/scl.conf /usr/local/syslog-ng/etc/
+#cp /usr/local/software/syslog-ng-3.5.5/scl/scl.conf /usr/local/syslog-ng/etc/
+#cp contrib/init.d.RedHat /etc/init.d/syslog-ng
+#cd /usr/local/syslog-ng/etc/
+#mv syslog-ng.conf.RedHat syslog-ng.conf
+#chmod +x /etc/init.d/syslog-ng
+#ln -s /usr/local/eventlog/lib/* /lib/
+#ln -s /usr/local/eventlog/lib/* /lib64/
+#vi /etc/init.d/syslog-ng   //添加版本好、修改source格式
+@version:3.5.5
+@include"scl.conf"
+
+options {
+          time_reopen (10);
+          chain_hostnames(off);
+          flush_lines(0);
+          log_fifo_size (1000);
+          use_dns (no);
+          use_fqdn (no);
+          create_dirs (no);
+          keep_hostname (yes);
+
+        };
+
+source s_udp514 {
+        network(
+        transport("udp")
+        port(514)
+        flags(no-parse)
+    );
+};
+
+#/etc/syslog-ng/syslog-ng.conf
+@version: 3.7
+@include "scl.conf"
+source      s_system { system(); internal();                 };
+destination d_all    { file("/var/log/all.log");             };
+log                  { source(s_system); destination(d_all); };
+
+#service syslog-ng start
+
