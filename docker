@@ -1,0 +1,179 @@
+------centos6安装docker------
+1 升级内核
+2 vi /etc/grub.conf
+3 安装yum优先级插件
+# yum install yum-priorities
+4 安装epel
+# rpm -Uvh http://mirrors.ustc.edu.cn/fedora/epel/6/x86_64/epel-release-6-8.noarch.rpm
+# rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+5 确认安装成功
+# yum list | grep epel-release
+6 导入key
+# rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+7  修改/etc/yum.repos.d/epel.repo文件
+在[epel]最后添加一条属性 priority=11
+8 重建缓存
+# yum makecache
+9 查找有docker安装包
+# yum list | grep docker
+10 安装docker
+# yum -y install docker
+11 更新device-mapper-libs
+# yum update device-mapper-libs
+12 启动和设置开机自启动
+#service docker start
+#chkconfig docker on
+13 检查支持情况
+# lxc-checkconfig
+14 启动cgroup
+#service cgroup start
+15 # grep aufs /proc/filesystems
+------/centos6安装docker------
+
+
+------在容器中部署静态网站---
+在容器中部署静态网站：Nginx部署流程：
+创建映射端口的交互式容器
+安装nginx
+安装文本编辑器vim
+创建静态页面
+修改nginx配置文件
+运行nginx
+验证网站访问
+
+#docker run -p 80 --name web -it ubuntu /bin/bash
+#yum -y install nginx vim
+#mkdir -p /var/www/html && cd /var/www/html 
+#vim index.html
+<html>
+<head>
+	<title>Nginx in Docker</title>
+<body>
+	<h1>Hello,I'm website in Docker!</h1>
+</body>
+</head>
+</html>
+
+#vim /etc/nginx/sites-enabled/default
+###修改主文件存放目录
+root /var/www/html;
+------/在容器中部署静态网站----
+
+
+------手动构建镜像------
+1 手动构建 docker commit [options] CONTAINER [reposity[:TAG]]
+-a,--author=""
+-m,--message="" Commit message
+-p,--pause=true Pause container during commit
+2  使用dockerfile构建镜像
+2.1 使用docker bulid命令
+
+#First Dockerfile
+FROM ubuntu:14.04
+MAINTAINTER suemy "sue6356@qq.com"
+RUN apt-get update   
+RUN apt-get install -y nginx
+EXPORT 80
+
+# mkdir -p dockerfile/df_test
+# cd dockerfile/df_test
+# vi Dockerfile
+
+2.2 # docker built [OPTION] PATH | URL | -
+# docker built -t='suemy/sue6356@qq.com'
+
+实例：
+1# yum -y install wget gcc gcc-c++ make openssl-devel
+2# wget http://nginx.org/download/nginx-1.13.5.tar.gz
+3# wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.41.tar.gz
+4# mv *gz usr/local/src/
+5# cd usr/local/src/
+6# tar -zxvf pcre-8.41.tar.gz 
+7# tar -zxvf nginx-1.13.5.tar.gz 
+8# useradd -s /sbin/nologin -M www
+9# cd nginx-1.13.5
+10# ./configure --prefix=/usr/local/nginx --user=www --group=www --with-http_ssl_module --with-pcre=/usr/local/src/pcre-8.41
+11# make && make install
+12# vi /usr/local/nginx/conf/nginx.conf
+第一行加上daemon off;
+14# vi /etc/rc.local
+追加上：/usr/local/nginx/sbin/nginx
+15# exit
+16# docker ps -l
+17# docker commit -m "my nginx" 7e349f1622dd suemy/my-nginx-v1
+18# docker images
+19# docker run -d -p 92:80 suemy/my-nginx-v1
+20# docker ps -l
+------/手动构建镜像------
+
+
+----Dockerfile构建镜像----
+*概要：
+基础镜像信息
+维护者信息
+镜像操作指令
+容器启动时指令
+
+*操作笔记：
+1   # mkdir -p /opt/docker-file/nginx && cd /opt/docker-file/nginx
+2.1 # wget http://nginx.org/download/nginx-1.13.5.tar.gz
+2.2 # wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.41.tar.gz
+3   # vi Dockerfile  
+         注：创建编辑文件,D要大写，文件内容：
+
+# This is My first DockerFile
+# Version 1.0
+# Author suemy
+
+# Base images    #它的妈妈是谁（基础镜像）
+FROM teradatalabs/centos6-ssh-oj8    
+
+# MAINTAINER      #（维护者信息）
+MAINTAINER suemy sue6356@qq.com
+
+# ADD 
+ADD pcre-8.41.tar.gz /usr/local/src
+ADD nginx-1.13.5.tar.gz /usr/local/src
+
+# RUN              #你想让它干啥（就把命令前面加上RUN）
+RUN yum install -y wget gcc gcc-c++ make openssl-devel
+RUN useradd -s /sbin/nologin -M www
+
+# WORKDIR           #cd的意思（当前工作目录）
+WORKDIR /usr/local/src/nginx-1.13.5
+
+RUN ./configure --prefix=/usr/local/nginx --user=www --group=www --with-http_ssl_module --with-pcre=/usr/local/src/pcre-8.41 && make && make install
+RUN echo "daemon off;" >> /usr/local/nginx/conf/nginx.conf
+
+ENV PATH /usr/lcoal/nginx/sbin:$PATH
+EXPOSE 80            #我要打开的门是啥（端口）
+
+CMD ["nginx"]
+
+4  #docker build -t nginx-file:v1 .
+5  #docker images
+----/Dockerfile构建镜像----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
