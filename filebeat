@@ -1,0 +1,208 @@
+#filebeat官网下载地址
+https://www.elastic.co/downloads/past-releases/filebeat-5-3-2      
+
+
+
+
+
+
+
+#-----Filebeat的架构分析、配置解释与示例 ----- 
+#reference from: http://blog.csdn.net/gamer_gyt/article/details/52688636
+	在看filebeat之前先来看下Beats，Beats 平台是 Elastic.co 从 packetbeat 发展出来的数据收集器系统。beat 收集器可以直接写入 Elasticsearch，也可以传输给 Logstash。其中抽象出来的 libbeat，提供了统一的数据发送方法，输入配置解析，日志记录框架等功能。也就是说，所有的 beat 工具，在配置上，除了 input 以外，在output、filter、shipper、logging、run-options 上的配置规则都是完全一致的
+	而这里的filebeat就是beats 的一员，目前beat可以发送数据给Elasticsearch，Logstash，File，Console四个目的地址。filebeat 是基于原先 logstash-forwarder 的源码改造出来的。换句话说：filebeat 就是新版的 logstash-forwarder，也会是 ELK Stack 在 shipper 端的第一选择
+	 整体架构理解：
+      上边我们也说了filebeat是用来收集日志的，那么在filebeat.yml中会配置指定的监听文件，也就是上图中的一个个log，这个log的目录是在prospectors中设   置，在看配置文件的时候便可以很明白的看出来，对于prospectors定位每个日志文件，Filebeat启动harvester。每个harvester读取新的内容一个日志文件，新的日志数据发送到spooler（后台处理程序），它汇集的事件和聚合数据发送到你已经配置了Filebeat输出。
+      安装步骤略了，在启动filebeat服务之前，需要先修改配置文件.
+
+
+
+
+#reference from： https://www.ibm.com/developerworks/cn/opensource/os-cn-elk-filebeat/index.html
+	#ELK 不是一款软件，而是 Elasticsearch、Logstash 和 Kibana 三种软件产品的首字母缩写。这三者都是开源软件，通常配合使用，而且又先后归于 Elastic.co 公司名下，所以被简称为 ELK Stack。根据 Google Trend 的信息显示，ELK Stack 已经成为目前最流行的集中式日志解决方案。
+#Beats 作为日志搜集器
+	这种架构引入 Beats 作为日志搜集器。目前 Beats 包括四种：
+    Packetbeat（搜集网络流量数据）；
+    Topbeat（搜集系统、进程和文件系统级别的 CPU 和内存使用情况等数据）；
+    Filebeat（搜集文件数据）；
+    Winlogbeat（搜集 Windows 事件日志数据）。
+#Filebeat 实现 log rotation
+    通俗的说，log rotation 是指当日志文件达到指定大小后，把随后的日志写到新的日志文件中，原来的日志文件重命名，加上日志的起止时间，以实现日志归档的目的。
+Filebeat 默认支持 log rotation，但需要注意的是，Filebeat 不支持使用 NAS 或挂载磁盘保存日志的情况。因为在 Linux 系列的操作系统中，Filebeat使用文件的inode信息会变化，导致 Filebeat 无法完整读取 log。
+    虽然 Filebeat 默认支持 log rotation，但是有三个参数的设置需要留意。
+    registry_file：这个文件记录了当前打开的所有 log 文件，以及每个文件的 inode、当前读取位置等信息。当 Filebeat 拿到一个 log 文件，首先查找 registry_file，如果是旧文件，就从记录的当前读取位置处开始读取；如果是新文件，则从开始位置读取；
+    close_older：如果某个日志文件经过 close_older 时间后没有修改操作，Filebeat 就关闭该文件的 handler。如果该值过长，则随着时间推移，Filebeat 打开的文件数量很多，耗费系统内存；
+    scan_frequency：Filebeat 每隔 scan_frequency 时间读取一次文件内容。对于关闭的文件，如果后续有更新，则经过 scan_frequency 时间后，Filebeat 将重新打开该文件，读取新增加的内容。
+#Elasticsearch 集群：
+#Elasticsearch 启动时会根据配置文件中设置的集群名字（cluster.name）自动查找并加入集群。Elasctisearch 节点默认使用 9300 端口寻找集群，所以必须开启这个端口。
+#一个 Elasticsearch 集群中一般拥有三种角色的节点，master、data 和 client。
+    master：master 节点负责一些轻量级的集群操作，比如创建、删除数据索引、跟踪记录集群中节点的状态、决定数据分片（shards）在 data 节点之间的分布；
+    data：data 节点上保存了数据分片。它负责数据相关操作，比如分片的 CRUD，以及搜索和整合操作。这些操作都比较消耗 CPU、内存和 I/O 资源；
+    client：client 节点起到路由请求的作用，实际上可以看做负载均衡器。
+#配置文件中有两个与集群相关的配置：
+    node.master：默认 true。True 表示该节点是 master 节点；
+    node.data：默认 true。True 表示该节点时 data 节点。如果两个值都为 false，表示是 client 节点。
+#一个集群中不一定有 client 节点，但是肯定有 master 和 data 节点。默认第一个启动的节点是 master。Master 节点也能起到路由请求和搜索结果整合的作用，所以在小规模的集群中，无需 client 节点。但是如果集群规模很大，则有必要设置专门的 client。
+#Logstash 使用 grok 过滤
+	#日志数据一般都是非结构化数据，而且包含很多不必要的信息，所以需要在 Logstash 中添加过滤插件对 Filebeat 发送的数据进行结构化处理。
+		使用 grok 正则匹配把那些看似毫无意义、非结构化的日志数据解析成可查询的结构化数据，是目前 Logstash 解析过滤的最好方式。
+		Grok 的用户不需要从头开始写正则。ELK github 上已经写好了很多有用的模式，比如日期、邮箱地址、IP4/6、URL 等。具体查看这里（https://github.com/logstash-plugins/logstash-patterns-core/blob/master/patterns/grok-patterns）
+#问题：Filebeat 如何读取多个日志目录？
+	解决方案：通过配置多个 prospector 就能达到要求。在配置文件的 prospectors 下，每个"-"表示一个 prospector，每个 prospector 包含一些配置项，指明这个 prospector 所要读取的日志信息。如下所示：
+prospectors:
+    -
+      paths:
+         - /home/WLPLog/*.log
+      # 其他配置项，具体参考 Elastic 官网
+    -
+      paths:
+         - /home/ApacheLog/*.log
+      # 其他配置项，具体参考 Elastic 官网
+
+#问题：Filebeat 如何区分不同日志来源？
+	#Filebeat 虽然能读取不同的日志目录，但是在 Logstash 这边，或者是 Elasticsearch 这边，怎么区分不同 application server 的日志数据呢？
+	#解决方案：Filebeat 的配置项 fields 可以实现不同日志来源的区分。用法如下：
+		prospectors:
+    -
+       paths:
+          - /home/WLPLog/*.log
+       fields:
+         log_source: WLP
+    -
+       paths:
+          - /home/ApacheLog/*.log
+       fields:
+         log_source: Apache
+
+		#解析：在 fields 配置项中，用户可以自定义域来标识不同的 log。比如上例中的"log_source"就是自己自定义的。如此，从 Filebeat 输出的 log 就有一个叫做 log_source 的域表明该 log 的实际来源。
+
+#问题：如何配置 Logstash 与 Elasticsearch 集群通信？
+我们知道 Logstash 使用 Elasticsearch 输出插件就能把数据发送到 Elasticsearch 进行存储和搜索。Elasticsearch 插件中有个 hosts 配置项说明 Elasticsearch 信息。但是假如是一个 Elasticsearch 集群，应该怎么配置 hosts？
+#解决方案：最简单的做法是把集群中所有的 Elasticsearch 节点的 IP 或者是 hostname 信息都在 hosts 中配上（它支持数组）。但是如果集群比较大，或者是集群节点变动频繁的话，还需要维护这个 hosts 值，不太方便。比较推荐的做法是只配集群中某个节点的信息，可以是 client 节点，也可以是 master 节点或者是 data 节点。因为不管是哪个节点，都知道该它所在集群的信息（集群规模，各节点角色）。这样，Logstash 与任意节点通信时都会先拿到集群信息，然后再决定应该给哪个节点发送数据输出请求。
+
+
+
+
+
+
+
+
+#参考资料：
+	#参考使用 Nginx 实现 Kibana 登陆认证博客，学习如何配置 Nginx 作为 Kibana 的反向代理，且实现登陆认证；
+  #reference from: http://www.cnblogs.com/yjmyzz/p/filebeat-turorial-and-kibana-login-setting-with-nginx.html
+		1修改filebeat下的filebeat.yml文件模板：
+filebeat:
+  prospectors:
+    -
+      paths:
+        - "/var/log/nginx/*.log"
+      input_type: log
+      document_type: nginx-access
+ 
+    -
+     paths:
+       - "/data/log/order/*.log"
+     input_type: log
+     document_type: order-service
+ 
+    -
+     paths:
+       - "/opt/service/zhifu/logs/*.log"
+     input_type: log
+     document_type: zhifu-service
+ 
+output:
+  elasticsearch:
+    hosts: ["localhost:9200"]
+ 
+logging:
+  files:
+    rotateeverybytes: 10485760
+			2设置elasticsearch的filebeat模板：
+				#curl -XPUT 'http://localhost:9200/_template/filebeat?pretty' -d@/etc/filebeat/filebeat.template.json
+				#注：上面localhost:9200改成实际的elasticsearch的地址，后面的一串为filebeat根目录下的filebeat.template.json的完整路径，顺利的话，会返回：
+{
+  "acknowledged" : true
+}
+#表示模板已被接收。
+			3启动：
+				#./filebeat -e -c filebeat.yml -d "Publish"
+				#如果能看到一堆东西输出，表示正在向elastic search发送日志。
+				#测试正常后，Ctrl+C结束，然后用
+				#nohup ./filebeat -e -c filebeat.yml >/dev/null 2>&1 &
+				#转入后台运行，最后到kibana里，创建一个索引，注意pattern为：filebeat-*
+
+#kibana的登录认证问题：
+#kibana是nodejs开发的，本身并没有任何安全限制，直接浏览url就能访问，如果公网环境非常不安全，可以通过nginx请求转发增加认证，方法如下：
+#tips：kibana没有重启命令，要重启，只能ps -ef|grep node 查找nodejs进程，干掉重来。
+	1#参考以下内容，修改配置文件：
+	
+server {
+  listen       80;
+  server_name syste1.example.com;
+  location / {
+     auth_basic "secret";
+     auth_basic_user_file /data/nginx/db/passwd.db;
+     proxy_pass http://localhost:5601;
+     proxy_set_header Host $host:5601;
+     proxy_set_header X-Real-IP $remote_addr;
+     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     proxy_set_header Via "nginx";
+  }
+  access_log off;
+}
+
+#上面的配置表示将syste1.example.com的请求，转发到服务器的5601端口，同时使用最基本的用户名、密码来认证。
+	#2、配置登录用户名，密码
+		#htpasswd -c /data/nginx/db/passwd.db user1
+		#注意passwd.db的路径要跟nginx配置中的一致，最后的user1为用户名，可以随便改，输入完该命令后，系统会提示输入密码，搞定后passwd.db中就有加密后的密码了，有兴趣的可以cat看下。提示：htpasswd是apache自带的小工具，如果找不到该命令，尝试用yum install httpd安装
+	#3、关掉kibana端口的外网访问
+		#用nginx转发后，一定要记得配置iptables之类的防火墙，禁止外部直接访问5601端口，这样就只能通过nginx来访问了。
+
+
+
+
+#-----ElasticSearch 集群环境检查-时钟同步-----
+#1.设置本地时间
+#cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+2.集群时间日期同步NTP
+#yum install ntp
+ntpdate pool.ntp.org
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
