@@ -196,6 +196,17 @@ fixfiles -R setup check
 注意：需要搭配启动auditd服务程式一起使用
 
 
+#删除当前目录下一个月之前的所有文件
+[root@test]# find . -mtime +29 -exec rm -rf {} \;
+#统计排序大小一周之前大于100M的文件
+[roo@test]# find . -size +100M -a -mtime 7  -exec ls -lhS {} \;
+#查询当前目录下前一天所有文件总大小：
+[root@test]# find . -mtime -1 -type f -ls |awk '{sum+=$1}END{print sum}'
+1457223926
+#当前目录下30分钟内的文件，并逐行为这个文件添加行头 1234
+[root@test]# find . -type f -amin -30 -exec sed -i 's/^/1234/' {} \;
+
+
 
 
 
