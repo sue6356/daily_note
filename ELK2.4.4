@@ -1,1 +1,336 @@
+elk stack
+
+logstash:
+日志收集 filter(过滤)、output（redis、kafka、es）
+es:
+对数据存储、分类、搜索
+kinaba:
+可视化展示
+
+elasticsearch是基于apache lucene开源搜索引擎。使用java开发并使用lucene作为其核心来实现所有索引和搜索功能，但是它的目的是通过简单的RESTful API来隐藏Lucene的复杂性，从而让全文搜索变得简单。
+不过，Elasticsearch不仅仅是lucene和全文搜索，我们还可以这样描述：
+1，分布式的实时文件存储，每个字段都被索引并可被搜索
+2，分布式的实时分析搜索引擎
+3，可以扩展到上百台服务器，处理PB级结构化或飞结构化数据
+
+ES集群原理说明及ES组件概念介绍：
+文档documentshi 
+索引（index）：文档容器，是具有体类似属性的文档的集合，类似于mysql的表，索引名必须是全小写字母
+类型(type)：是索引内部的逻辑分区，类型是一类相似文档的集合
+关系：一个索引内部可定义一个或多个类型（强烈建议 一个索引只存储一类数据）
+
+
+ES的集群组件：
+   cluster:
+     es的集群标示为集群名称，默认为"elasticsearch",节点就是靠此名字来决定加入到哪个集群，一个节点只能属于一个集群。
+   Node 节点：
+     运行了单个es实例的主机即为单节点，用于存储数据，参与集群索引及搜索操作，节点的标示靠节点名。
+   shard分片：
+     es集群是把一个索引内部的数据通过shard机制发布在不同的节点上，但每一个shard都是一个独立完整的案例。创建索引时es默认将索引分割为5个shard，用户也可以自定义。shard有两种类型，一种就primary shard（用于文档存储）和replicas shard（用于冗余数据），同时可以提高查询时的读取数据。一个primary shard具有几个replicas shard可以自定义及动态修改。
+   ES cluster集群的工作过程：
+     启动时，每个节点通过多播（默认TCP9200）或者单播方式通过TCP9300端口查找同一集群中的其他节点。查询之后，各节点间建立通讯，是否为同一集群是通过集群名称来进行判断的。集群中的所有节点会选举出一个主节点的节点，只节点的作用是用来管理节点状态，以及在集群范围内决定各shard的分布式。站在用户的角度，没有主节点的概念，每个节点均可接受并响应用户的各类请求，用户无需了解哪个是主节点。
+     主节点的功能：会周期性检查集群每个节点是否可用，当集群中其中一个节点出现问题的时候，主节点的作用是修复集群。例如该问题节点有一个primary shard，主节点的作用就是查找集群中该shard的所有副本shard，把集群中的一个replica shard提升为primary shard。
+
+
+node:（节点）单个的装有elasticsearch服务并且提供故障转移和扩展的服务器。
+cluster:（集群）一个集群就是由一个或多个node组织在一起，共同工作，共同分享整个数据具有负载均衡功能的集群。
+document：（文档）一个文档是一个可被索引的基础信息单元。
+index:（索引）就是一个拥有几份相似特征的文档的集合。
+type:（类型）一个索引中，可以定义一种或多种类型。
+field:（列）field是elashticsearch的最小单位，相当于数据的某一列。
+shards：（分片） elasticsearch将索引分成若干份，每个部分就是一个shard.
+replicas:（复制）replicas是索引一份或多份拷贝。
+
+restful 以及curl
+XML：可扩展标记语言，是一种程序与程序之间传输数据的标记语言   （其文件格式较庞大 解析代价大 浏览器间不通用）
+JSON：java script option notation 它是一种新型的轻量级数据交换格式 （数据格式简单 易于读写 格式压缩  易于解析 支持多种语言 直接能为服务端使用）
+restful：representational state transfer 表现层状态转化
+curl：以命令的方式执行http协议的请求工具，可以通过curl操作HTTP的get/put/post/delete方法
+
+
+倒排索引：inverted index 也称为反向索引置入档案或反向档案，是一种索引方法，被用来存储在全文搜索下某个单词在一个文档或者一组文档的存储位置的映射，它是文档检索系统中最常用的数据结构。
+常规的索引建立方式：文档-->关键词 的映射（正向索引）  缺点：费时，得把这个文档全部遍历一遍
+倒排反向建立索引：关键词-->文档 的映射 （反向索引）把正向索引的结果重新构造成倒排索引
+
+
+
+下载网站html文件
+#curl -o 163.html www.163.com
+
+显示http response的头信息
+#curl -i www.163.com
+
+显示一次http请求的通信过程
+#crul --trace output.txt www.163.com
+
+执行一次get/post/put/delete操作
+#curl -X GET/POST/PUT/DELETE www.163.com
+
+
+
+API文档
+https://www.elastic.co/guide/en/elasticsearch/reference/current/docs.html
+
+
+
+#-----2.4.0搭建-----
+系统准备
+软件版本：jdk8.60,elasticsearch1.7.1
+软件名称：jdk-8u60-linux-x64.tar.gz elasticsearch-1.7.1.tar.gz
+JDK下载地址：
+http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+Elasticsearch下载地址：
+https://www.elastic.co/downloads/elasticsearch
+
+安装elasticsearch
+yum remove java
+yum groupremove java 
+cd /usr/local && cd /usr/local && wget -c http://download.oracle.com/otn-pub/java/jdk/8u151-b12/e758a0de34e24606bca991d704f6dcbf/jdk-8u151-linux-x64.tar.gz?AuthParam=1508399606_e5997571fe08d346f215be305737e60f
+tar -zxvf jdk-8u60-linux-x64.tar.gz
+
+vim /etc/profile
+#java1.8
+#export JAVA_HOME=/usr/local/jdk1.8.0_151
+#export JAVA_BIN=/usr/local/jdk1.8.0_151/bin
+#export PATH=$PATH:$JAVA_HOME/bin
+#export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+#export JAVA_HOME JAVA_BIN PATH CLASSPATH
+
+export JAVA_HOME=/usr/local/jdk1.8.0_151
+export CLASSPATH=${JAVA_HOME}/lib
+export JRE_HOME=${JAVA_HOME}/jre
+export PATH=$JAVA_HOME/bin:$JAVA_HOME/jre/bin:$PATH
+export GREP_OPTIONS=--color=auto
+export PATH=/usr/local/openssh/bin:/usr/local/openssh/sbin:/usr/local/openssl/bin:/usr/local/openssl/sbin:$PATH
+
+reboot
+
+wget -c https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-2.4.0.tar.gz
+tar -zxvf elasticsearch-2.4.0
+cd elasticsearch-5.6.3/bin
+./elasticsearch -d     //-d让服务在后台运行
+web服务地址： http://localhost:9200
+若不成功重新确认java环变和日志 #cat /usr/local/elasticsearch-1.7.1/logs/elasticsearch.log
+
+目录认识：
+vim /usr/local/elasticsearch-1.7.1/bin/elasticsearch.in.bat    //最小内存 ES_MIN_MEM=256m
+vim /usr/local/elasticsearch-1.7.1/config/elasticsearch.yml    //yml标记语言 和xml类似
+cd /usr/local/elasticsearch-1.7.1/data/elasticsearch/node      //节点目录
+
+elasticsearch相关插件
+Head插件，是一个elasticsearch集群管理工具 它是完全有html5编写的独立网页程序
+Github  https://github.com/mobz/elasticsearch-head
+安装 # $/bin ./plugin install mobz/elasticsearch-head
+访问 http://localhost:9200/_plugin/head/
+
+Bigdesk，是elasticsearch的集群监控工具，可以通过它来查看集群的各种状态，如cpu、内存使用情况，索引数据，http连接数等。
+Github  https://github.com/lukas-vlcek/bigdesk
+安装 # $/bin ./plugin install lukas-vlcek/bigdesk/2.5.0
+访问 http://localhost:9200/_plugin/bigdesk 
+之后扩展别的机器 会自动加进来 很强大！
+
+
+
+Elasticsearch API CURD操作
+1索引初始化:
+创建索引之前可以对索引做初始化操作，比如指定shards数量以及replicas的数量。
+CURL -XPUT 'http://192.168.66.203:9200/library/' -d '{
+“settings”: {
+	
+  "index": {
+      "number_of_shards": 5,
+      "number_of_replicas": 1
+    }
+  }
+}'
+
+GET _search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+获取索引初始化设置
+CURL -XPUT 'http://192.168.66.203:9200/library/_settings'
+CURL -XPUT 'http://192.168.66.203:9200/library,library2/_settings'
+CURL -XPUT 'http://192.168.66.203:9200/_all/_settings'
+
+2索引文档API CURD
+Mavel插件也是elasticsearch的一个管理监控工具，集head和bigdesk有点为一身，但mavel插件不是免费的
+安装： # $/bin/plugin install elasticsearch/marvel/latest
+访问： http://localhost:9200/_plugin/marvel/
+
+Elasticsearch的内置字段以及类型
+内置字段：
+_uid,_id,_type,_source,_all,_analyzer,_boost,_parent,_routing,_routing,_index,_size,_timestamp,_ttl
+字段类型：
+String,Integer/long,Float/double,Boolean,Null,Date
+
+为了更快更迅速的同时检索多个文档
+meget API参数是一个doc数组，数组的每个节点定义一个文档的_index、_type、_id元数据。
+官方文档：https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-multi-get.html#doc-multi-get
+
+介绍bulk批量操作API
+为了实现多个文档的create、index、update或delete
+官方文档：https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
+bluk处理文档大小的最佳值
+数据加载在每个节点里的RAM里
+请求的数据超过一定的大小，那bulk的处理性能就会降低
+文档数据大小跟硬件配置，文档复杂度，以及当前集群的负载有关
+
+
+Elasticsearch版本控制
+为什么要进行版本控制
+悲观锁（假定会发生并发冲突，屏蔽一切可能违反数据完整性的操作）和乐观锁（假设不会发生冲突，只在提交操作时检查是否违反数据完整性）
+内部版本控制（_version自增长，修改数据后，_version会自动加1）和外部版本控制（为了保持_version与外部版本控制的数值一致，使用version_type=external检查数据当前的version值是否小于请求中的version值）
+
+
+Mapping映射
+1什么是映射
+映射：创建索引的时候，可以预定字段的类型以及相关属性。
+作用：这样会让索引建立得更加的细致和完善
+分类：静态映射，动态映射
+2映射的属性方法
+3动态映射
+文档中碰到一个以前没见过的字段，动态映射可以自动决定该字段的类型，并对该字段添加映射
+如何配置动态映射：通过dynamic属性进行控制（true:忽略新字段；strict:碰到陌生字段抛出异常）
+适用范围：适用在根对象上或者object类型的任意字段上
+4管理映射
+
+
+查询
+Elasticsearch是功能非常强大的全文搜索引擎，用它的目的就是为了能快速的查询你想要的数据
+基本查询：利用Elasticsearch内置查询条件进行查询
+过滤：查询同时，通过filter条件在不影响打分的情况下筛选出想要的数据
+
+
+Filter过滤
+filter查询语句
+cache缓存
+filter cache缓存执行原理图
+cache缓存
+Elasticsearch在执行缓存带有filter查询时，会打开索引的每个segment文件（Lucene式底层文件），然后去判断里面的文档是否符合filter要求。
+注意：旧的segment文件不会变，新来的数据会产生新的segment.
+
+匹配的结果会用一个大型的bigset数组来存储，这个数组的值只有0和1
+匹配1
+不匹配0
+bigset值是存在内存里的，而不是硬盘里，所以速度快！
+开启方式：在filter查询语句后面加"_cache":true
+注意：
+scriptfilters,geo-filters,data ranges这样的过滤方式开启cache无意义。
+exists,missing,range,term和terms查询是默认开启cache的
+
+
+bool查询 :
+          must,should,must_not
+          minimum_should_match ：表示一个文档至少匹配多少个短语才算是匹配成功
+          disable_coord: 启用和禁用一个文档中所包含所有查询关键词的分数得分计算，默认是false
+boosting查询
+constant_score查询
+indies查询
+
+
+
+ES集群管理
+1，elasticsearch.yml配置详解：（了解内部配置，观察发送变化，可控稳定持续）
+
+line21 #node.rack: ${RACK_ENV_VAR}    //相关的值可以用变量的形式
+line32 #cluster.name: elasticsearch   //设置集群名字
+line40 #node.name: "Franz Kafka"      //节点名称
+line71 #node.master: false            //true 启用则只做master，协调集群状态
+line72 #node.data: false              //
+line85 #node.rack: rack314            //每个节点可以定义一些已知关联的通用属性，用于后期集群进行碎片分片过滤
+line107 #index.number_of_shards: 5    //定义碎片数量
+line111 #index.number_of_replicas: 1  //定义副本数量
+line159 #path.work: /path/to/work     //定义临时文件位置
+line174 #plugin.mandatory: mapper-attachments,lang-groovy    //这个属性的值为各个插件的名称，如果该值里所列的插进没安装，则该节点将不能启动，默认是没有插件的。
+line184 #bootstrap.mlockall: true      //true则会锁定一些内存给elasticsearch(Es在内存不够JVM开启swapping的时候，表现得会很差，所以为了避免这个问题，将该属性设为true，表示锁定es所使用的内存)
+line203 #network.bind_host: 192.168.0.1    //节点绑定的ipv4或者ipv6地址
+line208 #network.publish_host: 192.168.0.1    发布地址，与别的elasticsearch通讯地址
+line212 #network.host: 192.168.0.1
+line216 #transport.tcp.port: 9300         //节点之间通讯端口
+line220 #transport.tcp.compress: true     //是否压缩tcp传输数据，默认true
+line224 #http.port: 9200                  //传输监听的端口
+line228 #http.max_content_length: 100mb   //
+line255 #gateway.recover_after_nodes: 1   //必须有几个节点启动后才会数据恢复
+line260 #gateway.recover_after_time: 5m   //初始化数据恢复的超时时间
+line266 #gateway.expected_nodes: 2        //多少个节点启动后开始数据恢复，不用等超时
+line279 #cluster.routing.allocation.node_initial_primaries_recoveries: 4   //设置节点并发数量（用来控制分片分配的进程）
+line283 #cluster.routing.allocation.node_concurrent_recoveries: 2          //添加删除或负载均衡时并发恢复限制线程的个数，默认为2
+line287 #indices.recovery.max_bytes_per_sec: 20mb                          //限制宽带 ，0无限制
+292 #indices.recovery.concurrent_streams: 5                                //从其他分片恢复数据时最大同时打开并发个数
+304 #discovery.zen.minimum_master_nodes: 1                                 //有多少节点后候选资格
+310 #discovery.zen.ping.timeout: 3s                                        //设置自己发现超时时间 网络查可设长点
+321 #discovery.zen.ping.multicast.enabled: false                           //是否打开多播协议发现节点
+326 #discovery.zen.ping.unicast.hosts: ["host1", "host2:port"]             //集群中master节点的初始化节点
+
+2，elasticsearch集群优化和管理
+ 1）分片和副本的工作方式
+ 2）影响elasticsearch性能的因素
+  max_num_segments:段数优化，可设置值最小为1，值越小，查询速度越快。
+	only_expunge_deletes:该优化操作是否只清空打有删除标签的索引记录。
+	flush:在执行完优化操作之后，再执行刷新操作，默认值为true。
+	wait_for_merge:当该参数设置为true时，表示其他请求操作要等到合并segment操作结束之后，再进行响应。（比较耗性能）
+
+     软件层面： 索引：1分词器，2segment数量
+                分片数量： 1多，会导致交互多。2少，会导致分片大
+                副本数量： 副本太多，性能会下降。
+
+     物理层面： 内存：单实例分配32G
+                硬盘：尽量大。推荐Raid10,SSD
+                CPU: 配置尽量高
+                网络：千兆，最好万兆
+
+当前单次：设置最大文件打开数：
+     #ulimit -SHn 65535
+     #ulimit -a
+     永久设置：
+     #vim /etc/security/limits.conf
+     * - nofile 65535         //追加
+
+3插件管理以及监控
+ 通过插件可以看到各种状态
+        可以做一些管理操作
+        可以做一些邮件告警
+
+发送邮件设置：
+"actions":{
+  "send_email" : {
+	"email":{
+	  "to":"<username>@<domainname>",
+	  "subject":"{{ctx.payload.hits.hits.0.fields.event}} the cluster",
+	  "body":"{{ctx.payload.hits.hits.0.fields.message}} the cluster {{ctx.payload.hits.hits.0.fields.cluster_name}}"
+	 }
+   }
+}
+
+vim $/bin/elasticsearch.in.sh
+    ES_MIN_MEM=4g
+    ES_MAX_MEM=4g
+//修改为4g,然后重启服务
+还要做内存锁定
+vim $/config/elasticsearch.yml
+line40 #node.name: "Franz Kafka"
+
+预警服务：  插件Watcher
+集群监控状态监控
+内存使用率
+CPU使用率
+文件目录空间
+FileData 缓存使用
+节点加入或者脱离集群
+
+
+
+
+
+
+
+
+
+
+
+
 
