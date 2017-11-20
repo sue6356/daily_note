@@ -1,0 +1,100 @@
+#echo -e "\033[0;31;40mhello world"  
+\033[0;31;40m。其中\033指的是33（8进制）代表escape字符，与”[“连起来就是设置字符颜色的标志。也就是说，当xterm看到”\033[“时就知道后面接的是要打印的字符的颜色设定。所以每次设定颜色的时候都要以这个开头。“\033[“后面接的是三个参数，都用数字给出并以”;”号分隔。他们分别代表字体属性，字体颜色与背景颜色。0代表重置原来的所有属性，31是红色的代码，40则是黑色背景的代码。
+可选参数：
+字体属性：
+    0 Reset All Attributes (return to normal mode)  
+    1 Bright (usually turns on BOLD)  
+    2 Dim  
+    3 Underline  
+    5 Blink  
+    7 Reverse  
+    8 Hidden  
+    
+字体颜色：
+30 black  
+31 dark red  
+32 light green  
+33 dark yellow  
+34 dark blue  
+35 light violet  
+36 light blue, cyan  
+37 white
+
+背景颜色：
+    40 Black  
+    41 Red  
+    42 Green  
+    43 Yellow  
+    44 Blue  
+    45 Magenta  
+    46 Cyan  
+    47 White  
+    
+#查看各种效果的脚本：
+    #!/bin/bash     
+    #对7种颜色的加亮  
+    for i in `seq 30 37`;do   
+        echo -e "\x1b\x5b0;$i;1m $i;1m"  
+    done       
+    #7种颜色与7种背景的搭配  
+    for j in `seq 40 47`;do  
+       for i in `seq 30 37`;do   
+           echo -e "\x1b\x5b0;$i;"$j"m $i;"$j"m"  
+       done  
+    done  
+    
+    
+    
+    
+    
+    
+色彩组合效果脚本：    
+#!/bin/sh
+for attr in 0 1 4 5 7 ; do
+
+    echo "----------------------------------------------------------------"
+
+    printf "ESC[%s;Foreground;Background - \n" $attr
+    
+    for fore in 30 31 32 33 34 35 36 37; do
+
+        for back in 40 41 42 43 44 45 46 47; do
+
+            printf '\033[%s;%s;%sm %02s;%02s  ' $attr $fore $back $fore $back
+
+        done
+
+    printf '\n'
+
+    done
+
+    printf '\033[0m'
+
+done
+
+    
+    
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
