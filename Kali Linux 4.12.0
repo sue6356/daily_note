@@ -2,6 +2,11 @@
 update-rc.d ssh enable  //系统自动启动SSH服务
 update-rc.d ssh disabled // 关闭系统自动启动SSH服务
 
+
+
+
+
+
 #12款最佳Linux命令行终端工具 reference from: http://os.51cto.com/art/201402/428965.htm
 搜集了一些非常有趣的终端软件，可以用来替代debian系的Linux原生终端:
 
@@ -52,7 +57,8 @@ Aterm
 apt-get install aterm
 
 Wterm
-是另外一个基于rxvt的轻量级命令行终端。它的功能包括可以设置背景图片，透明效果，反向透明等。大量的设置项使其成为一款可高度自定义的终端工具。它的安装方法是：
+是另外一个基
+于rxvt的轻量级命令行终端。它的功能包括可以设置背景图片，透明效果，反向透明等。大量的设置项使其成为一款可高度自定义的终端工具。它的安装方法是：
 apt-get install wterm
 它的缺点是，看起来它好像是已经没人维护了
 
@@ -66,6 +72,62 @@ sudo add-apt-repository ppa:hannes-janetzek/enlightenment-svn
 sudo apt-get update
 sudo apt-get install terminology
 这样你就可以使用它了。我相信你一定会吃惊于它能够做的事情。
+
+
+
+输入法安装
+vim /etc/apt/sources.list 
+添加如下一些镜像源（速度会快点而已）
+
+    deb http://http.kali.org/kali kali main non-free contrib
+    deb-src http://http.kali.org/kali kali main non-free contrib
+    deb http://security.kali.org/kali-security kali/updates main contrib non-free
+    deb http://ftp.sjtu.edu.cn/debian wheezy main non-free contrib
+    deb-src http://ftp.sjtu.edu.cn/debian wheezy main non-free contrib
+    deb http://ftp.sjtu.edu.cn/debian wheezy-proposed-updates main non-free contrib
+    deb-src http://ftp.sjtu.edu.cn/debian wheezy-proposed-updates main non-free contrib
+    deb http://ftp.sjtu.edu.cn/debian-security wheezy/updates main non-free contrib
+    deb-src http://ftp.sjtu.edu.cn/debian-security wheezy/updates main non-free contrib
+    deb http://mirrors.163.com/debian wheezy main non-free contrib
+    deb-src http://mirrors.163.com/debian wheezy main non-free contrib
+    deb http://mirrors.163.com/debian wheezy-proposed-updates main non-free contrib
+    deb-src http://mirrors.163.com/debian wheezy-proposed-updates main non-free contrib
+    deb-src http://mirrors.163.com/debian-security wheezy/updates main non-free contrib
+    deb http://mirrors.163.com/debian-security wheezy/updates main non-free contrib
+
+apt-get update
+apt-get upgrade
+
+安装中文输入法，终端输入一下任意一种方式即可。
+
+    #拼音五笔
+    apt-get install fcitx-table-wbpy ttf-wqy-microhei ttf-wqy-zenhei                        
+    #经典的ibus
+    apt-get install ibus ibus-pinyin    
+    # fcit     
+    apt-get install fcitx fcitx-pinyin fcitx-module-cloudpinyin fcitx-googlepinyin                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
