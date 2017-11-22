@@ -109,9 +109,28 @@ apt-get upgrade
 
 
 
+#---11.22---
+#kali 截图工具Scrot的安装及使用 reference from:   https://linux.cn/article-3197-1.html
+安装：
+#apt-get install scrot
+使用方式：
+1截取整个桌面
+#scrot
+2指定保存目标文件夹和截图文件名(默认保存当前目录下)
+#scrot /root/Pictures/1.png
+3截取特定窗口或矩形区域
+#scrot -s
 
 
-
+#kali 4.12.0安装最新版本wps
+reference from: www.kali.org.cn/thread-23538-1-1.html
+下载libpng12-0依赖包
+https://packages.debian.org/zh-cn/wheezy/amd64/libpng12-0/download    
+下载wps最新版本
+http://community.wps.cn/download/
+开始安装：
+#dpkg -i libpng12-0_1.2.49-1+deb7u2_amd64.deb 
+#dpkg -i wps-office_10.1.0.5672~a21_amd64.deb 
 
 
 
