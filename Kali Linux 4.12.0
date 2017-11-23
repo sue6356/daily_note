@@ -133,10 +133,10 @@ http://community.wps.cn/download/
 #dpkg -i wps-office_10.1.0.5672~a21_amd64.deb 
 
 
-
-
-
-
+Kali Linux 忘记登录密码后的重置方法:
+www.linuxidc.com/Linux/2016-07/133643.htm
+开机选*Adcanced options for kali GNU/LINUX 并按E进入编辑模式，把ro改为rw，并且在.gz 后面写上init=/bin/bash
+改完后按F10或Ctrl+X继续启动。最后输入passwd。修改完后重启系统就可以用新密码登录Kali Linux了
 
 
 
