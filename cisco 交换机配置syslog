@@ -1,0 +1,17 @@
+en 
+conf t 
+clock timezone GMT +8         #设置正8区北京时间
+exit 
+clock set HH:MM:SS DAY MOTH YEAR  #设置当前时间 小时：分钟：秒 日 月 年
+service timestamps debug uptime #开启debug调试信息增加时间戳
+service timestamps log datetime localtime #开启log日志增加时间戳
+logging on                   #启动log机制
+logging 10.1.1.23   #配置日志发送服务器，将日志发送到10.1.1.23上
+logging facility local2     #将记录时间类型记录为local2 
+logging trap warning    #将记录事件严重级别定义为从warningl开始，一直到最紧急级别的事件全部记录到前边指定的syslog server. 
+logging source-interface loopback0 #指定记录事件的发送源地址为loopback0的IP地址，根据自己的实际情况
+service timestamps log datetime localtime     #发送记录事件的时候包含时间标记
+end        #退出
+wr         #保存
+
+  
