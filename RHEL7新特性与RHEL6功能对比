@@ -1,0 +1,16 @@
+systemctl是主要的工具，它融合之前service和chkconfig的功能于一体。可以使用它永久性或只在当前会话中启用/禁用服务
+
+查看已启动的服务列表：
+#systemctl list-unit-files|grep enabled
+
+以树形列出正在运行的进程，它可以递归显示控制组内容。
+#systemd-cgls
+
+启用服务就是在当前“runlevel”的配置文件目录/etc/systemd/system/multi-user.target.wants/里，建立/usr/lib/systemd/system里面对应服务配置文件的软链接；禁用服务就是删除此软链接。
+
+
+
+
+
+
+
