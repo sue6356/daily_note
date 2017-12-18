@@ -1,4 +1,5 @@
 test for 12.18
+test for 12.18 second
 #设置系统自动启动SSH服务
 update-rc.d ssh enable  //系统自动启动SSH服务
 update-rc.d ssh disabled // 关闭系统自动启动SSH服务
